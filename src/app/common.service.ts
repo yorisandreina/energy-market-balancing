@@ -25,14 +25,13 @@ export class CommonService {
     );
   }
 
-  getMemberForecast(id: any): Promise<any[]> {
-    debugger;
+  getMemberForecast(id: any, params: any): Promise<any[]> {
     const headers = { 'Content-Type': 'application/json' };
     const request = {};
 
     // Return the Promise from the HTTP request
     return lastValueFrom(
-      this.httpClient.get<any[]>(`${this.baseUrl}/api/v1/balancing/member/${id}/forecast`, {
+      this.httpClient.get<any[]>(`${this.baseUrl}/api/v1/balancing/member/${id}/forecast?date=`+ params, {
         headers,
         params: request,
       })

@@ -1,0 +1,450 @@
+  // async processBalancingCircles() {
+  //   debugger;
+  //   for (const item of this.balancingCircles) {
+  //     const producers = item.members?.filter(
+  //       (member: any) => member?.type === 'Producer' && member?.id || []
+  //     );
+  //     console.log(producers)
+
+  //     const consumers = item.members?.filter(
+  //       (member: any) => member?.type === 'Consumer' && member?.id || []
+  //     );
+  //     console.log(consumers);
+
+  //     // Fetch forecasts for all producers concurrently
+  //     const producerForecasts = await Promise.all(
+  //       producers.map((producer: any) =>
+  //         this._common.getMemberForecast(producer.id)
+  //       )
+  //     );
+
+  //     producerForecasts.forEach((forecastData, index) => {
+  //       this.calculateInflow(forecastData, producers[index].name);
+  //     });
+
+  //     console.log(producerForecasts);
+
+  //     // Fetch forecasts for all consumers concurrently
+  //     const consumerForecasts = await Promise.all(
+  //       consumers.map((consumer: any) =>
+  //         this._common.getMemberForecast(consumer.id)
+  //       )
+  //     );
+
+  //     consumerForecasts.forEach((forecastData, index) => {
+  //       this.calculateOutflow(forecastData, consumers[index].name);
+  //     });
+
+  //     console.log(consumerForecasts);
+
+  //   }
+  // }
+
+  async processBalancingCircles() {
+    for (const item of this.balancingCircles) {
+      const hourlyImbalance: { [day: string]: { [hour: string]: number } } = {};
+
+      const producers =
+        item.members?.filter(
+          (member: any) => member?.type === 'Producer' && member?.id
+        ) || [];
+      console.log('producers:', producers);
+
+      const consumers =
+        item.members?.filter(
+          (member: any) => member?.type === 'Consumer' && member?.id
+        ) || [];
+
+      // Step 1: Fetch data for producers and consumers
+      const producerData = await Promise.all(
+        producers.map((producer: any) => this.processMemberForecast(producer))
+      );
+
+      const consumerData = await Promise.all(
+        consumers.map((consumer: any) => this.processMemberForecast(consumer))
+      );
+
+      console.log('Producer Data:', producerData);
+      console.log('Consumer Data:', consumerData);
+
+      // Step 2: Aggregate inflows and outflows
+      const inflowData: { [day: string]: { [hour: string]: number } } = {};
+      const outflowData: { [day: string]: { [hour: string]: number } } = {};
+
+      // Process producer data for inflows
+      producerData.forEach((data) => {
+        if (data && data.forecast) {
+          // Ensure data is not null
+          data.forecast.forEach((forecastItem: any) => {
+            const date = new Date(forecastItem.date)
+              .toISOString()
+              .split('T')[0]; // YYYY-MM-DD
+            const hour = new Date(forecastItem.date).getHours().toString(); // Hour as string
+
+            if (!inflowData[date]) inflowData[date] = {};
+            inflowData[date][hour] =
+              (inflowData[date][hour] || 0) + forecastItem.value; // Accumulate inflow by hour
+
+            // Debugging: Log inflow values
+            console.log(
+              `Inflow Data - Date: ${date}, Hour: ${hour}, Value: ${forecastItem.value}, Total: ${inflowData[date][hour]}`
+            );
+          });
+        }
+      });
+
+      // Process consumer data for outflows
+      consumerData.forEach((data) => {
+        if (data && data.forecast) {
+          // Ensure data is not null
+          data.forecast.forEach((forecastItem: any) => {
+            const date = new Date(forecastItem.date)
+              .toISOString()
+              .split('T')[0]; // YYYY-MM-DD
+            const hour = new Date(forecastItem.date).getHours().toString(); // Hour as string
+
+            if (!outflowData[date]) outflowData[date] = {};
+            outflowData[date][hour] =
+              (outflowData[date][hour] || 0) + forecastItem.value; // Accumulate outflow by hour
+
+            // Debugging: Log outflow values
+            console.log(
+              `Outflow Data - Date: ${date}, Hour: ${hour}, Value: ${forecastItem.value}, Total: ${outflowData[date][hour]}`
+            );
+          });
+        }
+      });
+
+      // Step 3: Calculate hourly imbalances
+      for (const date in inflowData) {
+        for (let hour = 0; hour < 24; hour++) {
+          const hourStr = hour.toString(); // Convert to string
+          if (!hourlyImbalance[date]) {
+            hourlyImbalance[date] = {};
+          }
+          const inflow = inflowData[date][hourStr] || 0; // Get hourly inflow
+          const outflow = outflowData[date][hourStr] || 0; // Get hourly outflow
+
+          // Store the imbalance for each hour
+          hourlyImbalance[date][hourStr] = inflow - outflow; // Calculate hourly imbalance
+
+          // Debugging: Log hourly imbalance values
+          console.log(
+            `Hourly Imbalance - Date: ${date}, Hour: ${hourStr}, Inflow: ${inflow}, Outflow: ${outflow}, Imbalance: ${hourlyImbalance[date][hourStr]}`
+          );
+        }
+      }
+
+      console.log(`Hourly Imbalance for ${item.name}:`, hourlyImbalance);
+    }
+  }
+
+  async processMemberForecast(member: any) {
+    try {
+      debugger;
+      const forecastData: any = await this._common.getMemberForecast(member.id);
+      console.log('this is the forecastData', forecastData);
+
+      // Calculate inflow and outflow organized by day and hour
+      // const inflowData =
+      //   member.type === 'Producer' ? this.calculateInflow(forecastData) : {};
+      // const outflowData =
+      //   member.type === 'Consumer' ? this.calculateOutflow(forecastData) : {};
+
+      // Store inflow and outflow in an object
+      const memberData = {
+        id: member.id,
+        name: member.name,
+        type: member.type,
+        category: member.category,
+        forecast: forecastData.forecast,
+      };
+
+      console.log(memberData); // Log the member data
+      return memberData;
+    } catch (error) {
+      console.error(
+        `Error fetching forecast for member ${member.name}:`,
+        error
+      );
+      return null; // Handle the case where fetch fails
+    }
+  }
+
+  aggregateImbalance(
+    producerData: any[],
+    consumerData: any[],
+    hourlyImbalance: { [day: string]: { [hour: string]: number } }
+  ) {
+    debugger;
+    // Initialize the imbalance calculation
+    for (const data of producerData) {
+      if (data) {
+        this.updateImbalance(data, hourlyImbalance, 'inflow');
+      }
+    }
+
+    for (const data of consumerData) {
+      if (data) {
+        this.updateImbalance(data, hourlyImbalance, 'outflow');
+      }
+    }
+  }
+
+  async updateImbalance(
+    data: any,
+    hourlyImbalance: { [day: string]: { [hour: string]: number } },
+    type: 'inflow' | 'outflow'
+  ) {
+    debugger;
+
+    try {
+      const forecastData: any = await this.getMemberForecast(data.memberId);
+
+      // Log the forecast data for debugging
+      console.log(
+        `Forecast Data for Member ID ${data.memberId}:`,
+        forecastData
+      );
+
+      // Ensure forecastData is an array
+      if (!Array.isArray(forecastData)) {
+        console.error(
+          `Expected forecastData to be an array for member ${data.memberId}`
+        );
+        return; // Exit early if the data is not in expected format
+      }
+
+      // forecastData.forEach((item: any) => {
+      //   hourlyImbalance = item?.value
+      // })
+
+      // Process the forecast data for imbalances
+      forecastData.forEach((forecastItem: any) => {
+        const date = new Date(forecastItem.date);
+        const day = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        const hour = date.getUTCHours().toString(); // Get hour in string format
+
+        // Log the processed date and hour for debugging
+        console.log(
+          `Processing forecastItem:`,
+          forecastItem,
+          `Day: ${day}, Hour: ${hour}`
+        );
+
+        // Initialize the nested object if it doesn't exist
+        if (!hourlyImbalance[day]) {
+          hourlyImbalance[day] = {};
+        }
+        if (!hourlyImbalance[day][hour]) {
+          hourlyImbalance[day][hour] = 0; // Start with 0 for the imbalance
+        }
+
+        // Update the imbalance based on inflow or outflow
+        if (type === 'inflow') {
+          hourlyImbalance[day][hour] += data.inflowOrOutflow; // Adding inflow
+        } else {
+          hourlyImbalance[day][hour] -= data.inflowOrOutflow; // Subtracting outflow
+        }
+      });
+
+      // Log the hourly imbalance after processing
+      console.log(
+        `Hourly Imbalance after processing for Member ID ${data.memberId}:`,
+        hourlyImbalance
+      );
+    } catch (error) {
+      console.error(
+        `Error in updateImbalance for Member ID ${data.memberId}:`,
+        error
+      );
+    }
+  }
+
+  calculateInflow(forecastData: any): {
+    [day: string]: { [hour: string]: number };
+  } {
+    const inflowData: { [day: string]: { [hour: string]: number } } = {};
+
+    forecastData?.forecast?.forEach((data: any) => {
+      const date = new Date(data.date);
+      const day = date.toISOString().split('T')[0]; // YYYY-MM-DD
+      const hour = date.getUTCHours().toString(); // Get hour in string format
+
+      // Initialize the nested object if it doesn't exist
+      if (!inflowData[day]) {
+        inflowData[day] = {};
+      }
+      if (!inflowData[day][hour]) {
+        inflowData[day][hour] = 0; // Start with 0 for inflow
+      }
+
+      // Accumulate inflow for this hour
+      inflowData[day][hour] += data.value || 0;
+    });
+
+    return inflowData;
+  }
+
+  calculateOutflow(forecastData: any): {
+    [day: string]: { [hour: string]: number };
+  } {
+    let outflowData: { [day: string]: { [hour: string]: number } } = {};
+
+    // forecastData.forEach((item: any) => {
+    //   outflowData = item?.value
+    // })
+
+    forecastData?.forecast?.forEach((data: any) => {
+      const date = new Date(data.date); // Assuming `data.date` is in the correct format
+      const day = date.toISOString().split('T')[0]; // Get day in YYYY-MM-DD format
+      const hour = date.getUTCHours().toString(); // Get hour in string format
+
+      // Initialize the nested object if it doesn't exist
+      if (!outflowData[day]) {
+        outflowData[day] = {};
+      }
+      if (!outflowData[day][hour]) {
+        outflowData[day][hour] = 0; // Start with 0 for outflow
+      }
+
+      outflowData[day][hour] = data.value || 0; // Add outflow for this hour
+    });
+
+    return outflowData;
+  }
+
+  // calculateInflow(forecastData: any, producerName: string) {
+  //   const inflow = forecastData?.forecast.reduce((total: number, data: any) => {
+  //     return total + data?.value; // Sum the values for inflow
+  //   }, 0);
+  //   console.log(`Total inflow for ${producerName}: ${inflow}`);
+  // }
+
+  // // Calculate Outflow
+  // calculateOutflow(forecastData: any, consumerName: string) {
+  //   const outflow = forecastData?.forecast.reduce(
+  //     (total: number, data: any) => {
+  //       return total + data?.value; // Sum the values for outflow
+  //     },
+  //     0
+  //   );
+  //   console.log(`Total outflow for ${consumerName}: ${outflow}`);
+  // }
+
+  async calculateImbalance() {}
+
+
+
+BREAK-----------------
+
+
+
+  async getBalancingCircles(selectedDate: string) {
+    console.time('getBalancingCircles');
+    debugger;
+    try {
+      const response = await this._common.getBalancingCircles();
+      this.balancingCircles = response;
+      // console.log('API Response:', this.balancingCircles); 
+
+      const groupData: { groups: Group[] } = { groups: [] };
+
+      for (let group of this.balancingCircles) {
+        const groupObj: Group = {
+          groupName: group.name,
+          imbalances: [],
+          members: [],
+        };
+
+        const memberPromises = group.members.map(async (member: any) => {
+          const memberObj: Member = {
+            id: member.id,
+            name: member.name,
+            type: member.type,
+            inflows: new Map<string, number>(),
+            outflows: new Map<string, number>(),
+          };
+
+          const forecast = await this.getMemberForecast(member.id);
+
+          for (let forecastData of forecast) {
+            const date = forecastData.date.split('T')[0]; // Extract just the date (YYYY-MM-DD)
+            const value =
+              member.type === 'Producer'
+                ? forecastData.value
+                : -forecastData.value;
+
+            if (date === selectedDate) {
+              // Only process if the date matches selectedDate
+              const time = forecastData.date.split('T')[1]; // Extract time (HH:MM:SS)
+              if (member.type === 'Producer') {
+                memberObj.inflows.set(
+                  time,
+                  (memberObj.inflows.get(time) || 0) + value
+                );
+              } else if (member.type === 'Consumer') {
+                memberObj.outflows.set(
+                  time,
+                  (memberObj.outflows.get(time) || 0) + value
+                );
+              }
+            }
+          }
+
+          return memberObj;
+        });
+
+        groupObj.members = await Promise.all(memberPromises);
+        groupData.groups.push(groupObj);
+      }
+
+      this.groupBalancingCircle = groupData;
+      console.log('Organized Data Structure:', this.groupBalancingCircle);
+
+      await this.calculateDailyImbalances(groupData.groups, selectedDate); // Pass the selectedDate here
+      console.timeEnd('getBalancingCircles');
+    } catch (error) {
+      console.error('Error fetching balancing circles:', error);
+    }
+  }
+
+  async calculateDailyImbalances(
+    groups: Group[],
+    selectedDate: string
+  ): Promise<void> {
+    for (const group of groups) {
+      const dailyImbalances: { date: string; imbalance: ImbalanceTime[] }[] =
+        [];
+
+      for (const member of group.members) {
+        const transactions =
+          member.type === 'Consumer' ? member.outflows : member.inflows;
+
+        // Filter transactions for the selectedDate
+        for (const [transactionTime, transactionValue] of transactions) {
+          const hour = transactionTime.split(':')[0]; // Get the hour part (HH)
+
+          // Find or create the date entry for the selectedDate
+          let dateEntry = dailyImbalances.find(
+            (entry) => entry.date === selectedDate
+          );
+          if (!dateEntry) {
+            // Initialize the 24-hour imbalance structure for the selected date
+            dateEntry = {
+              date: selectedDate,
+              imbalance: Array.from({ length: 24 }, (_, hour) => ({
+                time: `${String(hour).padStart(2, '0')}:00:00Z`,
+                value: 0,
+              })),
+            };
+            dailyImbalances.push(dateEntry);
+          }
+ 
+          dateEntry.imbalance[parseInt(hour)].value += transactionValue;
+        }
+      }
+
+      group.imbalances = dailyImbalances;
+    }
+  }
