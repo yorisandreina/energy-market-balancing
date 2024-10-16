@@ -1,15 +1,20 @@
-<p>imbalances works!</p>
-<!-- <pre>{{balancingCircles | json }}</pre> -->
+<div class="container">
+  <div class="row">
+    <div class="col-12 col-md-6 offset-md-3 ">
+      <div class="row">
+        <div class="d-flex col-10 align-items-center">
+          <h4>Hello World</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-<!-- <pre>{{memberForecast | json }}</pre> -->
-
-<!-- <pre>{{groupBalancingCircle | json }}</pre> -->
-
-<button (click)="getBalancingCircles('2024-10-14')">
+<!-- <button (click)="getBalancingCircles('2024-10-14')">
     <span>select</span>
-</button>
+</button> -->
 
-<div style="display: block">
+<div class="chart-container" style="position: relative; height: 60vh; width: 100%;">
  <canvas baseChart
    [data]="lineChartData"
    [labels]="lineChartLabels"

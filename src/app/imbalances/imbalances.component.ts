@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../common.service';
 import { Group, ImbalanceTime, Member } from 'src/interfaces/balancingCircle.interface';
-import { Chart, ChartData, ChartType } from 'chart.js';
+import { Chart, ChartData, ChartType, Colors } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { DefaultValueAccessor } from '@angular/forms';
+import zoomPlugin from 'chartjs-plugin-zoom';
+Chart.register(zoomPlugin);
 
 @Component({
   selector: 'app-imbalances',
@@ -50,8 +52,13 @@ export class ImbalancesComponent implements OnInit {
     };
 
     this.lineChartOptions = {
-      maintainAspectRatio: false,
+      maintainAspectRatio: true,
       responsive: true,
+      elements: {
+        point: {
+          borderColor: Colors,
+        }
+      },
       scales: {
         x: {
           type: 'category',
@@ -71,19 +78,19 @@ export class ImbalancesComponent implements OnInit {
       plugins: {
         zoom: {
           zoom: {
-            wheel: {
-              enabled: true, // Enable zooming with mouse wheel
-            },
-            pinch: {
-              enabled: true, // Enable pinch zooming
-            },
-            mode: 'x', // Zoom along the x-axis
-          },
-          pan: {
+          wheel: {
             enabled: true,
-            mode: 'x', // Pan along the x-axis
           },
+          pinch: {
+            enabled: true
+          },
+          mode: 'x',
         },
+        },
+        legend: {
+          position: "right",
+          usePointStyle: true,
+        }
       },
     };
 
@@ -107,7 +114,6 @@ export class ImbalancesComponent implements OnInit {
         };
 
         const memberPromises = group.members.map(async (member: any) => {
-          // Initialize member object
           const memberObj: Member = {
             id: member.id,
             name: member.name,
@@ -116,7 +122,6 @@ export class ImbalancesComponent implements OnInit {
             outflows: new Map<string, number>(),
           };
 
-          // Fetch forecast data
           const forecast = await this.getMemberForecast(
             member.id,
             selectedDate
@@ -184,8 +189,7 @@ export class ImbalancesComponent implements OnInit {
 
         group.imbalances = dailyImbalances;
 
-        // Prepare the dataset for this group
-        const values = dailyImbalances[0].imbalance.map((item) => item.value); // Assuming you want values for the first imbalance
+        const values = dailyImbalances[0].imbalance.map((item) => item.value);
         this.datasets.push({
           data: values,
           label: group.groupName,
@@ -193,7 +197,6 @@ export class ImbalancesComponent implements OnInit {
         });
       }
 
-      // Initialize the chart data after processing all groups
       this.initializeChart();
       console.timeEnd('getBalancingCircles');
     } catch (error) {
