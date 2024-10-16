@@ -1,10 +1,21 @@
 <p>imbalances works!</p>
-<pre>{{balancingCircles | json }}</pre>
+<!-- <pre>{{balancingCircles | json }}</pre> -->
 
 <!-- <pre>{{memberForecast | json }}</pre> -->
 
 <!-- <pre>{{groupBalancingCircle | json }}</pre> -->
 
-<button (click)="getBalancingCircles('2024-10-12')">
+<button (click)="getBalancingCircles('2024-10-14')">
     <span>select</span>
 </button>
+
+<div style="display: block">
+ <canvas baseChart
+   [data]="lineChartData"
+   [labels]="lineChartLabels"
+   [options]="lineChartOptions"
+   [legend]="lineChartLegend"
+   [type]="lineChartType">
+ </canvas>
+</div>
+

@@ -1,11 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../common.service';
 import { Group, ImbalanceTime, Member } from 'src/interfaces/balancingCircle.interface';
+import { Chart, ChartData, ChartType } from 'chart.js';
+import { BaseChartDirective } from 'ng2-charts';
+import { DefaultValueAccessor } from '@angular/forms';
 
 @Component({
   selector: 'app-imbalances',
   templateUrl: './imbalances.component.html',
   styleUrls: ['./imbalances.component.css'],
+  // standalone: true,
+  // imports: [BaseChartDirective]
 })
 export class ImbalancesComponent implements OnInit {
   balancingCircles: any[] = [];
@@ -16,11 +21,74 @@ export class ImbalancesComponent implements OnInit {
 
   selectedDate: any;
 
+  labels: any;
+
+  datasets: any[] = [];
+  dataValues: any[] = [];
+  values: any[] = [];
+  hours: any[] = [];
+
+  public lineChartData!: ChartData<'line'>;
+  public lineChartLabels!: Array<String>;
+  public lineChartOptions: any;
+  public lineChartColors: any;
+  public lineChartLegend = true;
+  public lineChartType: ChartType = 'line';
+
   constructor(private _common: CommonService) {}
 
   ngOnInit(): void {
     debugger;
-    console.log('ngOnInit called'); // Add this line
+    console.log('ngOnInit called');
+    this.getBalancingCircles(this.selectedDate);
+  }
+
+  initializeChart(): void {
+    this.lineChartData = {
+      labels: this.hours, // Put labels here
+      datasets: this.datasets,
+    };
+
+    this.lineChartOptions = {
+      maintainAspectRatio: false,
+      responsive: true,
+      scales: {
+        x: {
+          type: 'category',
+          title: {
+            display: true,
+            text: 'Hours',
+          },
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Energy units',
+          },
+        },
+      },
+      plugins: {
+        zoom: {
+          zoom: {
+            wheel: {
+              enabled: true, // Enable zooming with mouse wheel
+            },
+            pinch: {
+              enabled: true, // Enable pinch zooming
+            },
+            mode: 'x', // Zoom along the x-axis
+          },
+          pan: {
+            enabled: true,
+            mode: 'x', // Pan along the x-axis
+          },
+        },
+      },
+    };
+
+    this.lineChartLegend = true;
+    this.lineChartType = 'line';
   }
 
   async getBalancingCircles(selectedDate: string) {
@@ -39,41 +107,32 @@ export class ImbalancesComponent implements OnInit {
         };
 
         const memberPromises = group.members.map(async (member: any) => {
-          // Initialize member object with empty inflows and outflows
+          // Initialize member object
           const memberObj: Member = {
             id: member.id,
             name: member.name,
             type: member.type,
-            inflows: new Map<string, number>(), // Reset inflows
-            outflows: new Map<string, number>(), // Reset outflows
+            inflows: new Map<string, number>(),
+            outflows: new Map<string, number>(),
           };
 
-          // Fetch forecast data for the specific selectedDate
+          // Fetch forecast data
           const forecast = await this.getMemberForecast(
             member.id,
             selectedDate
           );
 
-
-          
-
           for (let forecastData of forecast) {
-            const time = forecastData.date.split('T')[1]; // Extract time (HH:MM:SS)
+            const time = forecastData.date.split('T')[1]; // Extract time
             const value =
               member.type === 'Producer'
                 ? forecastData.value
                 : -forecastData.value;
 
-  
-
-            // Store inflows and outflows directly
-            if (member.type === 'Producer') {;
+            if (member.type === 'Producer') {
               memberObj.inflows.set(time, value);
-    
             } else if (member.type === 'Consumer') {
-              // const currentValue = memberObj.outflows.get(time) || 0;
               memberObj.outflows.set(time, value);
-    
             }
           }
 
@@ -87,8 +146,55 @@ export class ImbalancesComponent implements OnInit {
       this.groupBalancingCircle = groupData;
       console.log('Organized Data Structure:', this.groupBalancingCircle);
 
-      // Calculate the imbalances for the selectedDate
-      await this.calculateDailyImbalances(groupData.groups, selectedDate);
+      // Calculate the imbalances and create datasets in one go
+      this.datasets = [];
+      this.hours = Array.from(
+        { length: 24 },
+        (_, hour) => `${String(hour).padStart(2, '0')}:00:00Z`
+      );
+
+      for (const group of groupData.groups) {
+        const dailyImbalances: { date: string; imbalance: ImbalanceTime[] }[] =
+          [];
+
+        for (const member of group.members) {
+          const transactions =
+            member.type === 'Consumer' ? member.outflows : member.inflows;
+
+          for (const [transactionTime, transactionValue] of transactions) {
+            const hour = transactionTime.split(':')[0];
+            let dateEntry = dailyImbalances.find(
+              (entry) => entry.date === selectedDate
+            );
+
+            if (!dateEntry) {
+              dateEntry = {
+                date: selectedDate,
+                imbalance: Array.from({ length: 24 }, (_, hour) => ({
+                  time: `${String(hour).padStart(2, '0')}:00:00Z`,
+                  value: 0,
+                })),
+              };
+              dailyImbalances.push(dateEntry);
+            }
+
+            dateEntry.imbalance[parseInt(hour)].value += transactionValue;
+          }
+        }
+
+        group.imbalances = dailyImbalances;
+
+        // Prepare the dataset for this group
+        const values = dailyImbalances[0].imbalance.map((item) => item.value); // Assuming you want values for the first imbalance
+        this.datasets.push({
+          data: values,
+          label: group.groupName,
+          fill: false,
+        });
+      }
+
+      // Initialize the chart data after processing all groups
+      this.initializeChart();
       console.timeEnd('getBalancingCircles');
     } catch (error) {
       console.error('Error fetching balancing circles:', error);
@@ -107,7 +213,6 @@ export class ImbalancesComponent implements OnInit {
         // Access inflows or outflows based on member type
         const transactions =
           member.type === 'Consumer' ? member.outflows : member.inflows;
-
 
         // Iterate over transactions to calculate daily imbalances
         for (const [transactionTime, transactionValue] of transactions) {
@@ -128,8 +233,6 @@ export class ImbalancesComponent implements OnInit {
             };
             dailyImbalances.push(dateEntry);
           }
-
-
 
           dateEntry.imbalance[parseInt(hour)].value += transactionValue;
         }

@@ -448,3 +448,30 @@ BREAK-----------------
       group.imbalances = dailyImbalances;
     }
   }
+
+
+  ----------BREAK
+  getSpecificData(): void {
+    debugger;
+    try {
+      if (this.balancingCircles) {
+        this.datasets = this.groupBalancingCircle.groups.map((group) => {
+          this.dataValues = group.imbalances.map(
+            (imbalance) => imbalance.imbalance
+          );
+
+          this.hours = this.dataValues[0].map((item: any) => item.time);
+
+          this.values = this.dataValues[0].map((item: any) => item.value);
+
+          return {
+            data: this.values, // Each dataset has an array with the single data point
+            label: group.groupName, // Set the label to the group's name
+            fill: false,
+            borderColor: 'rgba(77,83,96,1)', // Line color
+            backgroundColor: 'rgba(148,159,177,0.2)', // Background color
+          };
+        });
+      }
+    } catch (error) {}
+  }
