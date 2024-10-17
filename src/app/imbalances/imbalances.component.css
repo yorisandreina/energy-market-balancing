@@ -1,11 +1,5 @@
-.chart-scrollable-container {
-  width: 100%;
-  max-width: 100%; /* Ensure it doesn't exceed the container's width */
-  overflow-x: auto; /* Enable horizontal scrolling */
+.chart-container {
+  margin-right: 6vh;
 }
 
-.chart-scrollable-container canvas {
-  min-width: 1500px; /* Ensure the chart is wide enough to trigger scrolling */
-  height: auto; /* Adjust the height as needed */
-}
 

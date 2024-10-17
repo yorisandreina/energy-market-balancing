@@ -1,10 +1,30 @@
 <div class="container">
   <div class="row">
-    <div class="col-12 col-md-6 offset-md-3 ">
+    <div class="col-12 py-3">
       <div class="row">
-        <div class="d-flex col-10 align-items-center">
-          <h4>Hello World</h4>
+        <div class="text-start mt-4 px-5 mb-5">
+          <div class="d-flex align-items-center justify-content-between">
+          <h3>Hourly Energy Imbalance</h3>
+            <div class="d-flex align-items-center">
+              <i class="fa-solid fa-chevron-left p-3" style="font-size: 20px"></i>
+              <h5 class="pt-1">Date here</h5>
+              <i class="fa-solid fa-chevron-right p-3" style="font-size: 20px"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-center">
+            <i class="fa-solid fa-lightbulb text-warning"></i>
+          <h6 class="pt-2 mx-2">Try zooming in and out on the chart to explore hourly detailed data.</h6>
+          </div>
         </div>
+      </div>
+      <div class="chart-container">
+        <canvas baseChart
+          [data]="lineChartData"
+          [labels]="lineChartLabels"
+          [options]="lineChartOptions"
+          [legend]="lineChartLegend"
+          [type]="lineChartType">
+        </canvas>
       </div>
     </div>
   </div>
@@ -14,13 +34,4 @@
     <span>select</span>
 </button> -->
 
-<div class="chart-container" style="position: relative; height: 60vh; width: 100%;">
- <canvas baseChart
-   [data]="lineChartData"
-   [labels]="lineChartLabels"
-   [options]="lineChartOptions"
-   [legend]="lineChartLegend"
-   [type]="lineChartType">
- </canvas>
-</div>
 

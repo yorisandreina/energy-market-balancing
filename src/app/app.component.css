@@ -1,0 +1,50 @@
+#sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 12vh;
+  border-top-right-radius: 15px;
+  border-bottom-right-radius: 15px;
+}
+
+.nav-item {
+    font-size: 18px
+}
+
+.nav-item:hover {
+  color: #007bff; 
+}
+
+/* Add media query to handle smaller screen sizes */
+@media (max-width: 767.98px) {
+  #sidebar {
+    position: static;
+    width: 0%; /* Make sidebar full-width */
+  }
+  main {
+    margin-top: 0; /* Ensure main content doesn't overlap */
+  }
+}
+
+/* Ensure the main content respects the sidebar */
+main {
+  margin-left: 16.7%; /* Adjust based on sidebar width */
+}
+
+@media (max-width: 991.98px) {
+  main {
+    margin-left: 25%; /* Adjust for smaller screens */
+  }
+}
+
+@media (max-width: 767.98px) {
+  main {
+    margin-left: 0;
+  }
+}
+

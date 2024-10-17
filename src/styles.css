@@ -1,1 +1,32 @@
 /* You can add global styles to this file, and also import other style files */
+@font-face {
+    font-family: 'Outfit';
+    src: url('src/assets/Outfit/static/Outfit-Medium.ttf');
+}
+
+@font-face {
+    font-family: 'Outfit Light';
+    src: url('src/assets/Outfit/static/Outfit-Light.ttf');
+}
+
+@font-face {
+    font-family: 'Outfit Regular';
+    src: url('src/assets/Outfit/static/Outfit-Regular.ttf');
+}
+
+body {
+    font-family: 'Outfit', sans-serif; /* Use the font globally, with a fallback */
+}
+
+/* Optionally, apply it to all text elements */
+h1, h2, h3, h4, p, a, span, div {
+    font-family: 'Outfit', sans-serif; /* Use the font for specific elements if needed */
+}
+
+h6, h5 {
+    font-family: 'Outfit Light', sans-serif;
+}
+
+/* h5 {
+    font-family: 'Outfit Regular', sans-serif;
+} */

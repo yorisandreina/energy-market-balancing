@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonService } from '../common.service';
 import { Group, ImbalanceTime, Member } from 'src/interfaces/balancingCircle.interface';
-import { Chart, ChartData, ChartType, Colors } from 'chart.js';
+import { Chart, ChartData, ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { DefaultValueAccessor } from '@angular/forms';
 import zoomPlugin from 'chartjs-plugin-zoom';
@@ -54,11 +54,11 @@ export class ImbalancesComponent implements OnInit {
     this.lineChartOptions = {
       maintainAspectRatio: true,
       responsive: true,
-      elements: {
-        point: {
-          borderColor: Colors,
-        }
-      },
+      // elements: {
+      //   point: {
+      //     borderColor: Colors,
+      //   }
+      // },
       scales: {
         x: {
           type: 'category',
@@ -88,7 +88,7 @@ export class ImbalancesComponent implements OnInit {
         },
         },
         legend: {
-          position: "right",
+          position: "top",
           usePointStyle: true,
         }
       },
