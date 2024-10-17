@@ -7,6 +7,18 @@ import { NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 Chart.register(zoomPlugin);
 import * as bootstrap from 'bootstrap';
 
+/*
+Considerations for improvements:
+* Defining constants for repeated strings
+* Responsiveness of the webpage could be improved for more style precision
+* Improve error handling to correctly inform user and provide feedback
+* Improve loading states and empty states in components
+* Optimization of async operations -> although the time to execute the getBalancingCircles method is kept in the low 100 ms range, it could be optimized in terms of loops and data structures
+* It could be tested if separating tasks into methods leads to more optimal results, although based on the task and endpoints provided, curretn data handling seemed a good fit
+* Lastly, if I had focused more on the backend aspect of the task, I would have created optimized queries for faster, more accurate, and simpler data fetching instead of relying heavily on the frontend. 
+  This approach would allow for better error handling on the backend, reducing the risk of a poor user experience. 
+*/
+
 @Component({
   selector: 'app-imbalances',
   templateUrl: './imbalances.component.html',
@@ -254,8 +266,6 @@ export class ImbalancesComponent implements OnInit {
 
   async getBalancingCircles(selectedDate: any) {
     this.emptyStateDate = selectedDate === '' ? true : false;
-    console.log(selectedDate);
-    console.time('getBalancingCircles');
 
     try {
       const response = await this._common.getBalancingCircles();
@@ -411,9 +421,7 @@ export class ImbalancesComponent implements OnInit {
         }
       }
 
-      console.log('Final Datasets:', this.datasets);
       this.initializeChart();
-      console.timeEnd('getBalancingCircles');
     } catch (error) {
       console.error('Error fetching balancing circles:', error);
     }
