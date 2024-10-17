@@ -2,4 +2,12 @@
   margin-right: 6vh;
 }
 
+.custom-offcanvas-height {
+  height: 90vh; /* Adjust to your desired height, e.g., 75% of the viewport */
+}
+
+
+
+
+
 

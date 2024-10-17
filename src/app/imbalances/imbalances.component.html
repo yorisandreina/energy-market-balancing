@@ -1,30 +1,55 @@
-<!-- Modal Template -->
-<ng-template #detailsTemplate>
-  <div class="modal-header">
-    <h5 class="modal-title">{{ modalData.label }}</h5>
-    <button type="button" class="btn-close" (click)="closeModal()"></button>
-  </div>
-  <div class="modal-body">
-    <p>Value: {{ modalData.value }}</p>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" (click)="closeModal()">Close</button>
-  </div>
-</ng-template>
-
-<!-- Conditional Modal Display -->
-<div class="offcanvas offcanvas-bottom" tabindex="-1" id="detailsOffcanvas" aria-labelledby="detailsOffcanvasLabel">
-  <div class="offcanvas-header">
-    <h5 id="detailsOffcanvasLabel">{{ modalData.label }}</h5>
+<div class="offcanvas offcanvas-bottom custom-offcanvas-height px-5 py-3" tabindex="-1" id="detailsOffcanvas" aria-labelledby="detailsOffcanvasLabel">
+  <div class="d-flex align-items-center justify-content-between mt-4">
+    <h4>{{selectedData?.groupName}} Details</h4>
     <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
   </div>
-  <div class="offcanvas-body">
-    <p>Value: {{ modalData.value }}</p>
+  <div class="d-flex align-items-center mt-2">
+    <h5>{{ selectedData?.date | date: 'MMMM d, y' }}</h5>
+    <span class="mx-3 mb-2">|</span>
+    <h5>{{ selectedData?.label }}</h5>
   </div>
-  <div class="offcanvas-footer">
-    <button type="button" class="btn btn-secondary" (click)="closeModal()">Close</button>
+  
+  <div class="mt-4">
+    <div class="row">
+      <div class="col-12 col-md-6">
+        <h4 class="text-success">Producers:</h4>
+
+        <div *ngFor="let item of flowsMembers" class="my-4">
+          <div *ngIf="item?.flowType === 'inflow'">
+        <div class="d-flex align-items-center justify-content-between my-3">
+          <h6 class="text-muted">Name</h6>
+          <span>{{ item?.name }}</span>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between my-3">
+          <h6 class="text-muted">Inflow Value</h6>
+          <span>{{ item?.value }}</span>
+        </div>
+      </div>
+      </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <h4 class="text-danger">Consumers:</h4>
+
+        <div *ngFor="let item of flowsMembers" class="my-4">
+          <div *ngIf="item?.flowType === 'outflow'">
+        <div class="d-flex justify-content-between my-3">
+          <h6 class="text-muted">Name</h6>
+          <span>{{ item?.name }}</span>
+        </div>
+
+        <div class="d-flex justify-content-between my-3">
+          <h6 class="text-muted">Outflow Value</h6>
+          <span>{{ item?.value }}</span>
+        </div>
+        </div>
+      </div>
+      </div>
+    </div>
   </div>
 </div>
+
 
 
 <div class="container">
@@ -37,7 +62,7 @@
             <div class="d-flex align-items-center">
               <i (click)="subtractOneDay()" class="fa-solid fa-chevron-left p-3" style="font-size: 20px" *ngIf="!emptyStateDate"></i>
               <div *ngIf="date">
-                <h5 class="pt-1">{{date}}</h5>
+                <h5 class="pt-1">{{date | date: 'MMMM d, y'}}</h5>
               </div>
               <i (click)="addOneDay()" class="fa-solid fa-chevron-right p-3" style="font-size: 20px"></i>
             </div>
@@ -49,14 +74,6 @@
           <div *ngIf="emptyState" class="mt-5">
             <p>No data available for the selected date.</p>
           </div>
-
-          <!-- <div *ngIf="selectedData" class="mt-3">
-  <h5>Selected Data:</h5>
-  <p><strong>Label:</strong> {{ selectedData.label }}</p>
-  <p><strong>Value:</strong> {{ selectedData.value }}</p>
-</div> -->
-
-
 
         </div>
       </div>
@@ -73,8 +90,5 @@
   </div>
 </div>
 
-<!-- <button (click)="getBalancingCircles('2024-10-14')">
-    <span>select</span>
-</button> -->
 
 

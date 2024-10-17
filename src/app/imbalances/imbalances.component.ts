@@ -26,6 +26,7 @@ export class ImbalancesComponent implements OnInit {
   storedDate: any;
 
   labels: any;
+  flowsMembers: any[] = [];
 
   emptyState = true;
   emptyStateDate: boolean = true;
@@ -119,36 +120,80 @@ export class ImbalancesComponent implements OnInit {
     value: number;
     groupName: string;
     members: [];
-    flowsMembers: [];
+    date: any;
   } | null = null; // This will hold the data of the selected chart point
-  modalData: {
-    label: string;
-    value: number;
-    groupName: string;
-    members: [];
-    flowsMembers: [];
-  } = { label: '', value: 0, groupName: '', members: [], flowsMembers: [] }; // Define modalData here
+
 
   onChartClick(event: MouseEvent, elements: any) {
     console.log('The data:', this.groupBalancingCircle);
+
     // Check if elements are present and if there's valid line chart data
     if (
       elements.length > 0 &&
       this.lineChartData &&
       this.lineChartData.labels
     ) {
-      const index = elements[0].index; // Get the index of the clicked point
+      const dataPointIndex = elements[0].index; // Get the index of the clicked point
+      const datasetIndex = elements[0].datasetIndex; // Get the dataset index of the clicked point
 
       console.log('This is the specific dataset:', this.lineChartData.datasets);
 
       // Get the label and data point based on the index
-      const label = (this.lineChartData.labels[index] as string) || '';
+      const label = (this.lineChartData.labels[dataPointIndex] as string) || '';
       const dataPoint =
-        (this.lineChartData.datasets[0].data[index] as number) || 0;
-      const groupName = this.lineChartData.datasets[0].label || '';
-      const members = (this.lineChartData.datasets[0] as any).members || [];
-      const flowsMembers =
-        (this.lineChartData.datasets[0] as any).members || [];
+        (this.lineChartData.datasets[datasetIndex].data[
+          dataPointIndex
+        ] as number) || 0;
+      const groupName = this.lineChartData.datasets[datasetIndex].label || '';
+      const members =
+        (this.lineChartData.datasets[datasetIndex] as any).members || [];
+
+      // Initialize flowsMembers array
+      const flowsMembers: any = [];
+
+      // Extract the hour from the label
+      const hour = label.split(':')[0]; // Assuming label is in "HH:mm:ssZ" format
+
+      // Iterate over each member to find inflows or outflows for the extracted hour
+      members.forEach((member: any) => {
+        const memberName = member.name;
+
+        // Check inflows for matching hour
+        if (member.inflows && member.inflows.length > 0) {
+          const matchingInflows = member.inflows.filter((inflow: any) => {
+            // Assuming inflow has a 'date' property formatted as "YYYY-MM-DD HH:mm:ssZ"
+            const inflowHour = inflow.date.split('T')[1].split(':')[0];
+            return inflowHour === hour; // Match hour
+          });
+
+          // Store matching inflows
+          matchingInflows.forEach((inflow: any) => {
+            flowsMembers.push({
+              name: memberName,
+              flowType: 'inflow',
+              value: inflow.value, // Assuming inflow has a 'value' property
+            });
+          });
+        }
+
+        // Check outflows for matching hour
+        if (member.outflows && member.outflows.length > 0) {
+          const matchingOutflows = member.outflows.filter((outflow: any) => {
+            // Assuming outflow has a 'date' property formatted as "YYYY-MM-DD HH:mm:ssZ"
+            const outflowHour = outflow.date.split('T')[1].split(':')[0];
+            return outflowHour === hour; // Match hour
+          });
+
+          // Store matching outflows
+          matchingOutflows.forEach((outflow: any) => {
+            flowsMembers.push({
+              name: memberName,
+              flowType: 'outflow',
+              value: outflow.value, // Assuming outflow has a 'value' property
+            });
+          });
+        }
+      });
 
       // Set selected data for displaying
       this.selectedData = {
@@ -156,17 +201,17 @@ export class ImbalancesComponent implements OnInit {
         value: dataPoint,
         groupName: groupName,
         members: members,
-        flowsMembers: flowsMembers,
+        date: this.date
       };
 
-      // Set modal data to be displayed in the off-canvas
-      this.modalData = { label, value: dataPoint, groupName, members, flowsMembers };
+      this.flowsMembers = flowsMembers;
 
       // Open the modal
       this.openDetailsModal();
 
       // Log selected data for debugging
       console.log('Selected Data:', this.selectedData);
+      console.log('Flows Members Data:', this.flowsMembers);
 
       // Manually trigger change detection
       this.cdr.detectChanges();
