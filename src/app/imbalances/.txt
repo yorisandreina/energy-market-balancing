@@ -475,3 +475,127 @@ BREAK-----------------
       }
     } catch (error) {}
   }
+
+
+
+
+  ------- BREAK
+
+  async getBalancingCircles(selectedDate: string = '') {
+    debugger;
+    console.time('getBalancingCircles');
+    try {
+      const response = await this._common.getBalancingCircles();
+      this.balancingCircles = response;
+      // console.log(
+      //   'This is the balancing circle response',
+      //   this.balancingCircles
+      // );
+
+      const groupData: { groups: Group[] } = { groups: [] };
+
+      for (let group of this.balancingCircles) {
+        const groupObj: Group = {
+          groupName: group.name,
+          imbalances: [],
+          members: [],
+        };
+
+        const memberPromises = group.members.map(async (member: any) => {
+          const memberObj: Member = {
+            id: member.id,
+            name: member.name,
+            type: member.type,
+            inflows: new Map<string, number>(),
+            outflows: new Map<string, number>(),
+          };
+
+          const forecast = await this.getMemberForecast(
+            member.id,
+            selectedDate
+          );
+
+          for (let forecastData of forecast) {
+            const fullDate = forecastData.date;
+            const time = fullDate.split('T')[1]; // Extract time
+            const value =
+              member.type === 'Producer'
+                ? forecastData.value
+                : -forecastData?.value;
+
+            if (member.type === 'Producer') {
+              memberObj.inflows.set(fullDate, value);
+            } else if (member.type === 'Consumer') {
+              memberObj.outflows.set(fullDate, value);
+            }
+          }
+
+
+          return memberObj;
+        });
+
+        groupObj.members = await Promise.all(memberPromises);
+        groupData.groups.push(groupObj);
+      }
+
+      this.groupBalancingCircle = groupData;
+      console.log('Organized Data Structure:', this.groupBalancingCircle);
+
+      // Calculate the imbalances and create datasets in one go
+      this.datasets = [];
+      this.hours = Array.from(
+        { length: 24 },
+        (_, hour) => `${String(hour).padStart(2, '0')}:00:00Z`
+      );
+
+      for (const group of groupData.groups) {
+        const dailyImbalances: { date: string; imbalance: ImbalanceTime[] }[] =
+          [];
+
+        for (const member of group.members) {
+          const transactions =
+            member.type === 'Consumer' ? member.outflows : member.inflows;
+
+          for (const [transactionTime, transactionValue] of transactions) {
+            const hour = transactionTime.split('T')[1].split(':')[0];
+            let dateEntry = dailyImbalances.find(
+              (entry) => entry.date === transactionTime.split('T')[0]
+            );
+
+            if (!dateEntry) {
+              dateEntry = {
+                date: transactionTime.split('T')[0],
+                imbalance: Array.from({ length: 24 }, (_, hour) => ({
+                  time: `${String(hour).padStart(2, '0')}:00:00Z`,
+                  value: 0,
+                })),
+              };
+              dailyImbalances.push(dateEntry);
+            }
+
+            console.log(
+              `Updating imbalance - Date: ${dateEntry.date}, Time: ${transactionTime}, Value: ${transactionValue}`
+            );
+
+            dateEntry.imbalance[parseInt(hour)].value += transactionValue;
+          }
+        }
+
+
+        group.imbalances = dailyImbalances;
+
+        const values = dailyImbalances[0].imbalance.map((item) => item.value);
+        this.datasets.push({
+          data: values,
+          label: group.groupName,
+          fill: false,
+        });
+      }
+      console.log('Final Datasets:', this.datasets);
+
+      this.initializeChart();
+      console.timeEnd('getBalancingCircles');
+    } catch (error) {
+      console.error('Error fetching balancing circles:', error);
+    }
+  }

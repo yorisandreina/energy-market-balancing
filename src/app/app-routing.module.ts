@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { ImbalancesComponent } from './imbalances/imbalances.component';
 
 const routes: Routes = [
-  { path: '', pathMatch: 'full' },  // Redirect root to 'balancing-circles'
+  { path: '' },  // Redirect root to 'balancing-circles'
   { path: 'balancing-circles', component: ImbalancesComponent }, 
 ]
 @NgModule({

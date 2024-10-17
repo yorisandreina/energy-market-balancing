@@ -5,12 +5,13 @@ import { ImbalancesComponent } from './imbalances/imbalances.component';
 import { AppComponent } from './app.component';
 import { HttpClientModule } from '@angular/common/http';
 import { NgChartsModule } from 'ng2-charts';
+import { NgbModule, NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 
 
 @NgModule({
   declarations: [AppComponent, ImbalancesComponent],
-  imports: [BrowserModule, AppRoutingModule, HttpClientModule, NgChartsModule],
-  providers: [],
+  imports: [BrowserModule, AppRoutingModule, HttpClientModule, NgChartsModule, NgbModule],
+  providers: [NgbOffcanvas],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

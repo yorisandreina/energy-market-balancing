@@ -1,3 +1,32 @@
+<!-- Modal Template -->
+<ng-template #detailsTemplate>
+  <div class="modal-header">
+    <h5 class="modal-title">{{ modalData.label }}</h5>
+    <button type="button" class="btn-close" (click)="closeModal()"></button>
+  </div>
+  <div class="modal-body">
+    <p>Value: {{ modalData.value }}</p>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeModal()">Close</button>
+  </div>
+</ng-template>
+
+<!-- Conditional Modal Display -->
+<div class="offcanvas offcanvas-bottom" tabindex="-1" id="detailsOffcanvas" aria-labelledby="detailsOffcanvasLabel">
+  <div class="offcanvas-header">
+    <h5 id="detailsOffcanvasLabel">{{ modalData.label }}</h5>
+    <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <p>Value: {{ modalData.value }}</p>
+  </div>
+  <div class="offcanvas-footer">
+    <button type="button" class="btn btn-secondary" (click)="closeModal()">Close</button>
+  </div>
+</div>
+
+
 <div class="container">
   <div class="row">
     <div class="col-12 py-3">
@@ -6,18 +35,32 @@
           <div class="d-flex align-items-center justify-content-between">
           <h3>Hourly Energy Imbalance</h3>
             <div class="d-flex align-items-center">
-              <i class="fa-solid fa-chevron-left p-3" style="font-size: 20px"></i>
-              <h5 class="pt-1">Date here</h5>
-              <i class="fa-solid fa-chevron-right p-3" style="font-size: 20px"></i>
+              <i (click)="subtractOneDay()" class="fa-solid fa-chevron-left p-3" style="font-size: 20px" *ngIf="!emptyStateDate"></i>
+              <div *ngIf="date">
+                <h5 class="pt-1">{{date}}</h5>
+              </div>
+              <i (click)="addOneDay()" class="fa-solid fa-chevron-right p-3" style="font-size: 20px"></i>
             </div>
           </div>
           <div class="d-flex align-items-center">
             <i class="fa-solid fa-lightbulb text-warning"></i>
           <h6 class="pt-2 mx-2">Try zooming in and out on the chart to explore hourly detailed data.</h6>
           </div>
+          <div *ngIf="emptyState" class="mt-5">
+            <p>No data available for the selected date.</p>
+          </div>
+
+          <!-- <div *ngIf="selectedData" class="mt-3">
+  <h5>Selected Data:</h5>
+  <p><strong>Label:</strong> {{ selectedData.label }}</p>
+  <p><strong>Value:</strong> {{ selectedData.value }}</p>
+</div> -->
+
+
+
         </div>
       </div>
-      <div class="chart-container">
+      <div *ngIf="!emptyState" class="chart-container">
         <canvas baseChart
           [data]="lineChartData"
           [labels]="lineChartLabels"
