@@ -8,6 +8,7 @@ import { lastValueFrom } from 'rxjs';
 export class CommonService {
   baseUrl: any;
 
+  // TO DO: include the URL where the backend data is hosted or the local host
   constructor(public httpClient: HttpClient) {
     this.baseUrl = 'http://localhost:5295';
   }
@@ -16,7 +17,6 @@ export class CommonService {
     const headers = { 'Content-Type': 'application/json' };
     const request = {};
 
-    // Return the Promise from the HTTP request
     return lastValueFrom(
       this.httpClient.get<any[]>(`${this.baseUrl}/api/v1/balancing`, {
         headers,
@@ -25,16 +25,18 @@ export class CommonService {
     );
   }
 
-  getMemberForecast(id: any, params: any): Promise<any[]> {
+  getMemberForecast(id: any): Promise<any[]> {
     const headers = { 'Content-Type': 'application/json' };
     const request = {};
 
-    // Return the Promise from the HTTP request
     return lastValueFrom(
-      this.httpClient.get<any[]>(`${this.baseUrl}/api/v1/balancing/member/${id}/forecast?date=`+ params, {
-        headers,
-        params: request,
-      })
+      this.httpClient.get<any[]>(
+        `${this.baseUrl}/api/v1/balancing/member/${id}/forecast`,
+        {
+          headers,
+          params: request,
+        }
+      )
     );
   }
 }

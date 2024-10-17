@@ -1,27 +1,20 @@
-export interface Forecast {
-  date: string; // or string, depending on your data
-  value: number;
-}
+// Interface definition to determine properties and types for specific objects
 
 export interface Member {
-  id: string; // ID type
+  id: string;
   name: string;
   type: 'Producer' | 'Consumer';
-  inflows: Map<string, number>; // Changed from array to Map for inflows
+  inflows: Map<string, number>;
   outflows: Map<string, number>;
-}
-
-export interface ImbalaceValue {
-  value: number; // Change from string to number
 }
 
 export interface ImbalanceTime {
   time: string;
-  value: number; // Keep this as is
+  value: number;
 }
 
 export interface Date {
-  date: string; // Keep this as a string, if that's your intended use
+  date: string;
   imbalance: ImbalanceTime[];
 }
 

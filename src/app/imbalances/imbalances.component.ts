@@ -2,8 +2,6 @@ import { ChangeDetectorRef, Component, OnInit, TemplateRef, ViewChild } from '@a
 import { CommonService } from '../common.service';
 import { Group, ImbalanceTime, Member } from 'src/interfaces/balancingCircle.interface';
 import { Chart, ChartData, ChartType } from 'chart.js';
-import { BaseChartDirective } from 'ng2-charts';
-import { DefaultValueAccessor } from '@angular/forms';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import { NgbOffcanvas } from '@ng-bootstrap/ng-bootstrap';
 Chart.register(zoomPlugin);
@@ -15,6 +13,15 @@ import * as bootstrap from 'bootstrap';
   styleUrls: ['./imbalances.component.css'],
 })
 export class ImbalancesComponent implements OnInit {
+  static getBalancingCircles() {
+    throw new Error('Method not implemented.');
+  }
+  static errorHandler(errorHandler: any) {
+    throw new Error('Method not implemented.');
+  }
+  static isError(isError: any) {
+    throw new Error('Method not implemented.');
+  }
   balancingCircles: any[] = [];
   memberForecast: any[] = [];
   consumers: any[] = [];
@@ -49,7 +56,6 @@ export class ImbalancesComponent implements OnInit {
 
   constructor(
     private _common: CommonService,
-    private offCanvasService: NgbOffcanvas,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -72,7 +78,7 @@ export class ImbalancesComponent implements OnInit {
       maintainAspectRatio: true,
       responsive: true,
       onClick: (event: MouseEvent, elements: any[]) => {
-        this.onChartClick(event, elements); // Bind the click event
+        this.onChartClick(event, elements); // Click event for point in chart
       },
       scales: {
         x: {
@@ -114,31 +120,25 @@ export class ImbalancesComponent implements OnInit {
     this.lineChartType = 'line';
   }
 
-  // Add this property to your component class
   selectedData: {
     label: string;
     value: number;
     groupName: string;
     members: [];
     date: any;
-  } | null = null; // This will hold the data of the selected chart point
-
+  } | null = null; // Hold the data of the selected chart point
 
   onChartClick(event: MouseEvent, elements: any) {
-    console.log('The data:', this.groupBalancingCircle);
-
-    // Check if elements are present and if there's valid line chart data
     if (
       elements.length > 0 &&
       this.lineChartData &&
       this.lineChartData.labels
     ) {
-      const dataPointIndex = elements[0].index; // Get the index of the clicked point
-      const datasetIndex = elements[0].datasetIndex; // Get the dataset index of the clicked point
+      const dataPointIndex = elements[0].index; // Index of the clicked point
+      const datasetIndex = elements[0].datasetIndex; // Dataset index of the clicked point
 
       console.log('This is the specific dataset:', this.lineChartData.datasets);
 
-      // Get the label and data point based on the index
       const label = (this.lineChartData.labels[dataPointIndex] as string) || '';
       const dataPoint =
         (this.lineChartData.datasets[datasetIndex].data[
@@ -148,20 +148,18 @@ export class ImbalancesComponent implements OnInit {
       const members =
         (this.lineChartData.datasets[datasetIndex] as any).members || [];
 
-      // Initialize flowsMembers array
       const flowsMembers: any = [];
 
       // Extract the hour from the label
-      const hour = label.split(':')[0]; // Assuming label is in "HH:mm:ssZ" format
+      const hour = label.split(':')[0];
 
       // Iterate over each member to find inflows or outflows for the extracted hour
       members.forEach((member: any) => {
         const memberName = member.name;
 
-        // Check inflows for matching hour
+        // Match hour to inflow
         if (member.inflows && member.inflows.length > 0) {
           const matchingInflows = member.inflows.filter((inflow: any) => {
-            // Assuming inflow has a 'date' property formatted as "YYYY-MM-DD HH:mm:ssZ"
             const inflowHour = inflow.date.split('T')[1].split(':')[0];
             return inflowHour === hour; // Match hour
           });
@@ -171,15 +169,14 @@ export class ImbalancesComponent implements OnInit {
             flowsMembers.push({
               name: memberName,
               flowType: 'inflow',
-              value: inflow.value, // Assuming inflow has a 'value' property
+              value: inflow.value,
             });
           });
         }
 
-        // Check outflows for matching hour
+        // Match hour to outflows
         if (member.outflows && member.outflows.length > 0) {
           const matchingOutflows = member.outflows.filter((outflow: any) => {
-            // Assuming outflow has a 'date' property formatted as "YYYY-MM-DD HH:mm:ssZ"
             const outflowHour = outflow.date.split('T')[1].split(':')[0];
             return outflowHour === hour; // Match hour
           });
@@ -189,34 +186,32 @@ export class ImbalancesComponent implements OnInit {
             flowsMembers.push({
               name: memberName,
               flowType: 'outflow',
-              value: outflow.value, // Assuming outflow has a 'value' property
+              value: outflow.value,
             });
           });
         }
       });
 
-      // Set selected data for displaying
+      // Data to be displayed
       this.selectedData = {
         label: label,
         value: dataPoint,
         groupName: groupName,
         members: members,
-        date: this.date
+        date: this.date,
       };
 
       this.flowsMembers = flowsMembers;
 
-      // Open the modal
       this.openDetailsModal();
 
       // Log selected data for debugging
       console.log('Selected Data:', this.selectedData);
       console.log('Flows Members Data:', this.flowsMembers);
 
-      // Manually trigger change detection
+      // Trigger change detection to avoid empty data sets
       this.cdr.detectChanges();
     } else {
-      // Reset selected data if no point is clicked
       this.selectedData = null;
     }
   }
@@ -226,7 +221,7 @@ export class ImbalancesComponent implements OnInit {
       'detailsOffcanvas'
     ) as HTMLElement;
     const bsOffcanvas = new bootstrap.Offcanvas(offcanvas);
-    bsOffcanvas.show(); // Show the off-canvas
+    bsOffcanvas.show();
   }
 
   closeModal() {
@@ -235,40 +230,43 @@ export class ImbalancesComponent implements OnInit {
     ) as HTMLElement;
     const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvas);
     if (bsOffcanvas) {
-      bsOffcanvas.hide(); // Hide the off-canvas
+      bsOffcanvas.hide();
     }
   }
 
   addOneDay() {
-    const newDate = new Date(this.date); // Convert string date to Date object
-    newDate.setDate(newDate.getDate() + 1); // Add one day
+    const newDate = new Date(this.date);
+    newDate.setDate(newDate.getDate() + 1);
 
-    // Format the date back to a string in 'YYYY-MM-DD' format
     this.selectedDate = newDate.toISOString().split('T')[0];
 
     this.getBalancingCircles(this.selectedDate);
   }
 
   subtractOneDay() {
-    const newDate = new Date(this.date); // Convert string date to Date object
-    newDate.setDate(newDate.getDate() - 1); // Add one day
+    const newDate = new Date(this.date);
+    newDate.setDate(newDate.getDate() - 1);
 
-    // Format the date back to a string in 'YYYY-MM-DD' format
     this.selectedDate = newDate.toISOString().split('T')[0];
 
     this.getBalancingCircles(this.selectedDate);
   }
 
   async getBalancingCircles(selectedDate: any) {
-    this.emptyStateDate = selectedDate == '' ? true : false;
+    this.emptyStateDate = selectedDate === '' ? true : false;
     console.log(selectedDate);
     console.time('getBalancingCircles');
+
     try {
       const response = await this._common.getBalancingCircles();
       this.balancingCircles = response;
 
       const groupData: { groups: Group[] } = { groups: [] };
 
+      // Set the date once, based on selectedDate or the first forecast date
+      let finalSelectedDate = selectedDate;
+
+      // Loop through each group to process data
       for (let group of this.balancingCircles) {
         const groupObj: Group = {
           groupName: group.name,
@@ -287,15 +285,17 @@ export class ImbalancesComponent implements OnInit {
 
           const forecast = await this.getMemberForecast(
             member.id,
-            selectedDate
           );
 
-          if (!selectedDate && forecast.length > 0) {
-            this.date = forecast[0].date.split('T')[0];
+          // Determine the date only once based on the first forecast, if not selectedDate
+          if (!finalSelectedDate && forecast.length > 0) {
+            finalSelectedDate = forecast[0].date.split('T')[0];
+            this.date = finalSelectedDate;
           } else {
-            this.date = selectedDate;
+            this.date = finalSelectedDate;
           }
 
+          // Process forecast data
           for (let forecastData of forecast) {
             const fullDate = forecastData.date;
             const value =
@@ -303,7 +303,6 @@ export class ImbalancesComponent implements OnInit {
                 ? forecastData.value
                 : -forecastData?.value;
 
-            // Store inflows and outflows based on type
             if (member.type === 'Producer') {
               memberObj.inflows.set(fullDate, value);
             } else if (member.type === 'Consumer') {
@@ -321,14 +320,14 @@ export class ImbalancesComponent implements OnInit {
       this.groupBalancingCircle = groupData;
       console.log('Organized Data Structure:', this.groupBalancingCircle);
 
-      // Reset datasets for each group to avoid summing previous values
+      // Reset datasets for each group
       this.datasets = [];
       this.hours = Array.from(
         { length: 24 },
         (_, hour) => `${String(hour).padStart(2, '0')}:00:00Z`
       );
 
-      // Process each group separately to calculate daily imbalances
+      // Process each group for daily imbalances
       for (const group of groupData.groups) {
         const dailyImbalances: { date: string; imbalance: ImbalanceTime[] }[] =
           [];
@@ -342,25 +341,25 @@ export class ImbalancesComponent implements OnInit {
             continue;
           }
 
-          // Ensure selectedDate comparison is done correctly
           const lastTransactionDate: any = Array.from(transactions.keys())
             .pop()
             ?.split('T')[0];
 
-          if (selectedDate && selectedDate > lastTransactionDate) {
+          // Use the finalSelectedDate for comparison
+          if (finalSelectedDate && finalSelectedDate > lastTransactionDate) {
             this.emptyState = true;
             return;
           } else {
             this.emptyState = false;
           }
 
-          // Only process transactions for the correct date scope
+          // Process transactions for the correct date
           for (const [transactionTime, transactionValue] of transactions) {
             const transactionDate = transactionTime.split('T')[0];
             const hour = transactionTime.split('T')[1].split(':')[0];
 
-            // Ensure we process the correct date only
-            if (selectedDate && transactionDate !== selectedDate) continue;
+            if (finalSelectedDate && transactionDate !== finalSelectedDate)
+              continue;
 
             let dateEntry = dailyImbalances.find(
               (entry) => entry.date === transactionDate
@@ -384,20 +383,15 @@ export class ImbalancesComponent implements OnInit {
 
         group.imbalances = dailyImbalances;
 
-        // Create dataset entry for the group, including member details
         if (dailyImbalances.length > 0) {
           const values = dailyImbalances[0].imbalance.map((item) => item.value);
 
-          // Collect inflow and outflow data for each member
           const memberData = group.members.map((member) => {
-            if (selectedDate == '') {
-              selectedDate = this.date;
-            }
             const inflowsForDate = Array.from(member.inflows)
-              .filter(([date]) => date.startsWith(selectedDate))
+              .filter(([date]) => date.startsWith(finalSelectedDate))
               .map(([date, value]) => ({ date, value }));
             const outflowsForDate = Array.from(member.outflows)
-              .filter(([date]) => date.startsWith(selectedDate))
+              .filter(([date]) => date.startsWith(finalSelectedDate))
               .map(([date, value]) => ({ date, value }));
 
             return {
@@ -412,7 +406,7 @@ export class ImbalancesComponent implements OnInit {
             data: values,
             label: group.groupName,
             fill: false,
-            members: memberData, // Include member data
+            members: memberData,
           });
         }
       }
@@ -425,55 +419,13 @@ export class ImbalancesComponent implements OnInit {
     }
   }
 
-  async getMemberForecast(id: any, params: any) {
+  async getMemberForecast(id: any) {
     try {
-      const response: any = await this._common.getMemberForecast(id, params);
-      return response.forecast; // Assuming the forecast is returned as an array
+      const response: any = await this._common.getMemberForecast(id);
+      return response.forecast;
     } catch (error) {
       console.error('Error fetching member forecast:', error);
       return [];
     }
   }
-
-  // async calculateDailyImbalances(
-  //   groups: Group[],
-  //   selectedDate: any
-  // ): Promise<void> {
-  //   debugger;
-  //   for (const group of groups) {
-  //     const dailyImbalances: { date: string; imbalance: ImbalanceTime[] }[] =
-  //       [];
-
-  //     for (const member of group.members) {
-  //       // Access inflows or outflows based on member type
-  //       const transactions =
-  //         member.type === 'Consumer' ? member.outflows : member.inflows;
-
-  //       // Iterate over transactions to calculate daily imbalances
-  //       for (const [transactionTime, transactionValue] of transactions) {
-  //         const hour = transactionTime.split(':')[0]; // Get the hour part (HH)
-
-  //         // Find or create the date entry for the selectedDate
-  //         let dateEntry = dailyImbalances.find(
-  //           (entry) => entry.date === selectedDate
-  //         );
-  //         if (!dateEntry) {
-  //           // Initialize the 24-hour imbalance structure for the selected date
-  //           dateEntry = {
-  //             date: selectedDate,
-  //             imbalance: Array.from({ length: 24 }, (_, hour) => ({
-  //               time: `${String(hour).padStart(2, '0')}:00:00Z`,
-  //               value: 0,
-  //             })),
-  //           };
-  //           dailyImbalances.push(dateEntry);
-  //         }
-
-  //         dateEntry.imbalance[parseInt(hour)].value += transactionValue;
-  //       }
-  //     }
-
-  //     group.imbalances = dailyImbalances;
-  //   }
-  // }
 }
