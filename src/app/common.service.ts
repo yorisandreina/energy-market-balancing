@@ -10,7 +10,7 @@ export class CommonService {
 
   // TO DO: include the URL where the backend data is hosted or the local host
   constructor(public httpClient: HttpClient) {
-    this.baseUrl = 'http://localhost:5295';
+    this.baseUrl = '';
   }
 
   getBalancingCircles(): Promise<any[]> {
