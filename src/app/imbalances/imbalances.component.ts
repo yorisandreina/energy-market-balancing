@@ -19,6 +19,19 @@ Considerations for improvements:
   This approach would allow for better error handling on the backend, reducing the risk of a poor user experience. 
 */
 
+/*
+RESPONSIBILITIES: fetch and process balancing circle data, initialize and manage line chart, hadling date selection and navigation, managing details modal
+
+ChangeDetectorRef: trigger Angular's change detection manually so UI updates immediately
+specially useful for scenarios where the default change detection may not catch data changes  
+
+OPTIMIZATION: lazy loading, caching to reduce repeated API calls
+
+TESTING: mock service and useful methods
+
+BAKCEND: database aggregation pipelines, limit data,
+*/
+
 @Component({
   selector: 'app-imbalances',
   templateUrl: './imbalances.component.html',
@@ -148,8 +161,6 @@ export class ImbalancesComponent implements OnInit {
     ) {
       const dataPointIndex = elements[0].index; // Index of the clicked point
       const datasetIndex = elements[0].datasetIndex; // Dataset index of the clicked point
-
-      console.log('This is the specific dataset:', this.lineChartData.datasets);
 
       const label = (this.lineChartData.labels[dataPointIndex] as string) || '';
       const dataPoint =

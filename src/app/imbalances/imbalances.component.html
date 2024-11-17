@@ -1,4 +1,4 @@
-<div class="offcanvas offcanvas-bottom custom-offcanvas-height px-5 py-3" tabindex="-1" id="detailsOffcanvas" aria-labelledby="detailsOffcanvasLabel">
+<div class="offcanvas offcanvas-bottom custom-offcanvas-height px-5 py-3" tabindex="-1" id="detailsOffcanvas" aria-labelledby="detailsOffcanvasLabel" data-cy="modal">
   <div class="d-flex align-items-center justify-content-between mt-4">
     <h4>{{selectedData?.groupName}} Details</h4>
     <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
@@ -62,16 +62,16 @@
             <div class="d-flex align-items-center">
               <i (click)="subtractOneDay()" class="fa-solid fa-chevron-left p-3" style="font-size: 20px" *ngIf="!emptyStateDate"></i>
               <div *ngIf="date">
-                <h5 class="pt-1">{{date | date: 'MMMM d, y'}}</h5>
+                <h5 class="pt-1 date" data-cy="date">{{date | date: 'MMMM d, y'}}</h5>
               </div>
-              <i (click)="addOneDay()" class="fa-solid fa-chevron-right p-3" style="font-size: 20px"></i>
+              <i (click)="addOneDay()" class="fa-solid fa-chevron-right p-3" style="font-size: 20px" data-cy=fetch-balancing-circles></i>
             </div>
           </div>
           <div class="d-flex align-items-center">
             <i class="fa-solid fa-lightbulb text-warning"></i>
           <h6 class="pt-2 mx-2">Try zooming in and out on the chart to explore hourly detailed data.</h6>
           </div>
-          <div *ngIf="emptyState" class="mt-5">
+          <div *ngIf="emptyState" class="mt-5 empty-state">
             <p>No data available for the selected date.</p>
           </div>
 
